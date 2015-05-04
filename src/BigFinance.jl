@@ -19,9 +19,11 @@ include("readnanex.jl")
 #Analytics
 export traj, ssa
 include("correlation.jl")
+export logreturns, simplereturns, autocorr
+include("series.jl")
 export gkvol
 include("volatility.jl")
-export logreturns, simplereturns, signatureplot, fei, marketshares
+export signatureplot, fei, marketshares
 include("microstructure.jl")
 export gesd
 include("gesd.jl")
