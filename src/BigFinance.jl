@@ -17,6 +17,8 @@ include("readnanex.jl")
 #Analytics
 export traj, ssa
 include("correlation.jl")
+export gkvol
+include("volatility.jl")
 
 export gesd
 include("gesd.jl")
