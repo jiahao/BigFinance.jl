@@ -36,3 +36,60 @@ function fei(data)
     # possible entropy. Basically divide by the log number of possible markets
     Hrenorm = H/log(67)
 end
+
+@doc """
+Compute log returns from a DataFrame with a price field
+""" ->
+function logreturns(tpv::DataFrame)
+    const P0 = tpv[1, :price]
+    nP = size(tpv, 1)
+    R = zeros(nP)
+    const R0 = log(P0)
+    for i=2:nP
+        R[i] = log(tpv[i, :price]) - R0
+    end
+    DataFrame(logreturn=R)
+end
+
+@doc """
+Compute simple returns from a DataFrame with a price field
+""" ->
+function simplereturns(tpv::DataFrame)
+    R = zeros(nP)
+    for i=2:nP
+        R[i] = tpv[i, :price]/tpv[i-1, :price] - 1
+    end
+    DataFrame(simplereturn=R)
+end
+
+@doc """
+Compute signature plot
+
+Compute integrated variance estimator as a function of the discretization step
+""" ->
+function signatureplot(returns)
+    r = diff(returns)
+
+    nr = length(r)
+    nΔ = round(Int, √nr)
+    intσs = zeros(nΔ)
+    for Δ = 1:nΔ, i=1:Δ:nr
+        intσs[Δ] += r[i]^2
+    end
+
+    xtimessec = (1:nΔ)*0.025
+    xtimes = (1:nΔ)*Dates.Millisecond(25)
+
+    model(x, p) = p[1]*x.^-p[2]
+    modelfit = curve_fit(model, xtimessec, intσs, [1.0, 1.0])
+    errors = estimate_errors(modelfit, 0.95)
+
+    plot(Scale.x_log10, Scale.y_log10,
+        Theme(default_color=color("black"), highlight_width=0px, default_point_size=0.5px),
+        layer(x=xtimes, y=intσs, Geom.point),
+        layer(x=xtimes, y=map(x->model(x, modelfit.param), xtimessec, Geom.line),
+        Guide.xlabel("Sampling time"),
+        Guide.ylabel("Integrated variance"),
+        Guide.title("Power law scaling (α = $(round(modelfit.param[2], 5)) ± $(round(errors[2], 5)))")
+    )
+end

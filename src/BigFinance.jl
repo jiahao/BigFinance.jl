@@ -2,8 +2,10 @@ module BigFinance
 
 using Color
 using Compat
+using DataFrames
 using Distributions
 using Gadfly
+using LsqFit
 
 if VERSION < v"0.4.0-"
     using Dates
@@ -19,7 +21,7 @@ export traj, ssa
 include("correlation.jl")
 export gkvol
 include("volatility.jl")
-export signatureplot, fei, marketshares
+export logreturns, simplereturns, signatureplot, fei, marketshares
 include("microstructure.jl")
 export gesd
 include("gesd.jl")
