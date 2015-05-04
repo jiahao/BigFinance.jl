@@ -19,7 +19,8 @@ export traj, ssa
 include("correlation.jl")
 export gkvol
 include("volatility.jl")
-
+export signatureplot, fei, marketshares
+include("microstructure.jl")
 export gesd
 include("gesd.jl")
 
