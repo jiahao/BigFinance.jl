@@ -23,3 +23,31 @@ function simplereturns(tpv::DataFrame)
     DataFrame(simplereturn=R)
 end
 
+@doc """
+Compute autocorrelation
+
+Uses Wiener-Khinchin theorem and the FFT
+
+Input:
+    A series
+
+Return:
+    r: Autocorrelation function of the series
+    τ: Decay time of r, determined by least-squares fit to simple exponential
+    σ: Error in decay time of r, using 95% confidence interval
+""" ->
+function autocorr(series::AbstractVector)
+    nr = length(series)
+    r = rfft([series; zero(series)])
+    r = r.*conj(r)
+    r = real(irfft(r, 2nr))[1:nr]
+
+    model(x, p) = p[1]*exp(-x/p[2])
+    modelfit = curve_fit(model, 0:nr-1, r, [r[1], 1.0])
+    errors = estimate_errors(modelfit, 0.95)
+
+    r, modelfit.param[2], errors[2]
+end
+
+
+
