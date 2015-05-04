@@ -6,11 +6,12 @@ using Distributions
 using Gadfly
 
 if VERSION < v"0.4.0-"
+    using Dates
     using Docile
 end
 
 #File I/O and decoding
-export showtrade
+export parse_tpv, showtrade
 include("readnanex.jl")
 
 #Analytics
