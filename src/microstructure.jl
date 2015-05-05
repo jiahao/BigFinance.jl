@@ -62,7 +62,7 @@ function signatureplot(returns)
     plot(Scale.x_log10, Scale.y_log10,
         Theme(default_color=color("black"), highlight_width=0px, default_point_size=0.5px),
         layer(x=xtimes, y=intσs, Geom.point),
-        layer(x=xtimes, y=map(x->model(x, modelfit.param), xtimessec, Geom.line),
+        layer(x=xtimes, y=map(x->model(x, modelfit.param), xtimessec, Geom.line)),
         Guide.xlabel("Sampling time"),
         Guide.ylabel("Integrated variance"),
         Guide.title("Power law scaling (α = $(round(modelfit.param[2], 5)) ± $(round(errors[2], 5)))")
