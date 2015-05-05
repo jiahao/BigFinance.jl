@@ -84,25 +84,24 @@ Missing entries are not included
 If the second argument is true, uniqfy data by time stamp. The price is
 overwritten by the weighted average and the tick volume is summed.
 """ ->
-function parse_tpv(data, uniquetime=false)
-    times = parse_times(data)
-    prices = sub(data, :, 29)
-    vols = int(sub(data, :, 28))
-    voltypes = sub(data, :, 22)
+parse_tpv(data, uniquetime::Bool=true) = parse_tpv(parse_times(data), sub(data, :, 29), int(sub(data, :, 28)), sub(data, :, 22), uniquetime)
+parse_tpv(data::DataFrame, uniquetime::Bool=true) = parse_tpv(data[:,:systime], data[:,:price], data[:,:ttickvol], data[:,:tvoltype], uniquetime)
+
+function parse_tpv(times, prices, vols, voltypes, uniquetime=true)
     sp = sortperm(times)
 
     #Now handle the possibility that there are different volume types
     voltypes = voltypes[sp]
     vols = vols[sp]
 
-    n = size(data, 1)
+    n = length(times)
     incrementalvols = similar(vols)
     for i=1:n
-        if voltypes[i] == 0 #Non-incremental, need to diff
+        if voltypes[i] == 0 #Incremental volume, need to diff
             incrementalvols[i] = vols[i] - vols[i-1]
-        elseif voltypes[i]==1 #Incremental, no need to diff
-            incrementalvols[i] = vols[i]
-        elseif voltypes[i] == 2 #Non-incremental, need to diff
+        elseif voltypes[i]==1 #Non-incremental volume, ignore
+            incrementalvols[i] = 0
+        elseif voltypes[i] == 2 #Total volume, subtract from previous
             incrementalvols[i] = vols[i] - vols[i-1]
         else
             error("Type 3 volume type not implemented")
@@ -130,7 +129,7 @@ function parse_tpv(data, uniquetime=false)
             deleteat!(incrementalvols, idx)
         end
 
-        all(incrementalvols .> 0) || warn("Non-positive volumes")
+        all(incrementalvols .≥ 0) || warn("negative volumes present")
     end
 
     DataFrame(time=times, price=prices, vol=incrementalvols)
