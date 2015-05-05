@@ -80,7 +80,7 @@ function readnxtrade(filename::String)
             :sesstimedow, :sesstimedoy, :exgtimet, :exgtimetz, :symbol, #15
             :listexgidx, :repexgidx, :sessid, :tpflag, :tcflag, #20
             :tcidx, :tvoltype, :tbate, :tsize, :texgseq, #25
-            :trescback, :ttotalvol, :ttickvol, :price, :popen, #30
+            :trecsback, :ttotalvol, :ttickvol, :price, :popen, #30
             :phi, :plo, :plast, :ttick, :pchange, #35
             :aft, :af, :afl, :ast, :ass, #40
             :qmdrgn, :qmdbbo, :qmfbbo, :qmfrbn, :qmtbbo, #45
