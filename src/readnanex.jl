@@ -154,13 +154,17 @@ function parse_tpv(times, prices, vols, voltypes, uniquetime=true)
 
     n = length(times)
     incrementalvols = similar(vols)
+    lastvol = 0
     for i=1:n
+        thisvol = vols[i]
         if voltypes[i] == 0 #Incremental volume, need to diff
-            incrementalvols[i] = vols[i] - vols[i-1]
+            incrementalvols[i] = thisvol - lastvol
+            lastvol = thisvol
         elseif voltypes[i]==1 #Non-incremental volume, ignore
             incrementalvols[i] = 0
         elseif voltypes[i] == 2 #Total volume, subtract from previous
-            incrementalvols[i] = vols[i] - vols[i-1]
+            incrementalvols[i] = thisvol - lastvol
+            lastvol = thisvol
         else
             error("Type 3 volume type not implemented")
         end
