@@ -61,13 +61,18 @@ const fieldnames = [
 
 #TODO handle time zone and DST
 """ ->
-function parse_times(data)
-    #Convert first two fields to a Julia DateTime
+function parse_times(data, datefield=1, timefield=2)
     times = Array(Dates.DateTime, size(data, 1))
-    isdefined(:dateformat) || (const dateformat = "yyyy-mm-ddHH:MM:SS.sss")
-    for i in 1:size(data, 1)
-        times[i] = Dates.DateTime(string(data[i, 1], data[i, 2]), dateformat)
-    end
+    #isdefined(:dateformat) || (const dateformat = "yyyy-mm-ddHH:MM:SS.sss")
+    @inbounds for i in 1:size(data, 1)
+        #times[i] = Dates.DateTime(string(df[i, datefield], df[i, timefield]), dateformat)
+        d = convert(ASCIIString, data[i, datefield])
+        t = convert(ASCIIString, data[i, timefield])
+        times[i] = Dates.DateTime(
+            parse(Int, d[1:4]), parse(Int, d[6:7]), parse(Int, d[9:10]),
+            parse(Int, t[1:2]), parse(Int, t[4:5]), parse(Int, t[7:8]), parse(Int, t[10:12])
+        )
+   end
     times
 end
 
