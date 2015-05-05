@@ -52,6 +52,64 @@ const fieldnames = [
 "Quote Match Type (RGN)",
 ];
 
+##########################################################
+# High level function for reading in data as a DataFrame #
+##########################################################
+
+@doc """
+Read NxCore trade data from TSV file
+""" ->
+function readnxtrade(filename::String)
+    gc_disable()
+    #Read in raw TSV
+    df=readtable(filename, separator='\t', header = false,
+        eltypes=[
+            UTF8String, UTF8String, Int, Int, Int, Int, Int, #7
+            UTF8String, Int, Int, Int, Int, UTF8String, Int, #14
+            UTF8String, Int, Int, Int, Int, Int, #20
+            Int, Int, UTF8String , Int, Int, #25
+            Int, Int, Int, Float64, Float64, #30
+            Float64, Float64, Float64, Float64, Float64, #35
+            Float64, Int, Int, Int, Int, #40
+            Int, Int, Int, Int, Int, #45
+            Int
+        ], names = [
+            :systimed, :systimet, :systimetz, :systimedst, :systimedo, #5
+            :systimedow, :systimedoy,
+            :sesstimed, :sesstimedst, :sesstimedo, #10
+            :sesstimedow, :sesstimedoy, :exgtimet, :exgtimetz, :symbol, #15
+            :listexgidx, :repexgidx, :sessid, :tpflag, :tcflag, #20
+            :tcidx, :tvoltype, :tbate, :tsize, :texgseq, #25
+            :trescback, :ttotalvol, :ttickvol, :price, :popen, #30
+            :phi, :plo, :plast, :ttick, :pchange, #35
+            :aft, :af, :afl, :ast, :ass, #40
+            :qmdrgn, :qmdbbo, :qmfbbo, :qmfrbn, :qmtbbo, #45
+            :qmtrgn #46
+        ])
+
+    #Add systime column for properly parsed time
+    df[:systime]=BigFinance.parse_times(df, :systimed, :systimet)
+
+    #Delete useless fields
+    for field in [:systimed, :systimet, :systimetz, :systimedst, :systimedo, #5
+        :systimedow, :systimedoy,
+        :sesstimed, :sesstimedst, :sesstimedo, #10
+        :sesstimedow, :sesstimedoy, :exgtimet, :exgtimetz,
+        :popen, #30
+        :phi, :plo, :plast, :ttick, :pchange, #35
+        :aft, :af, :afl, :ast, :ass, #40
+        :qmdrgn, :qmdbbo, :qmfbbo, :qmfrbn, :qmtbbo, #45
+        :qmtrgn #46
+    ]
+        try delete!(df, field) end
+    end
+    gc_enable()
+
+    #Return DataFrame sorted by exchange sequence ID
+    sort!(df, cols=:texgseq)
+end
+
+
 #############################################
 # Low level functions for parsing raw data  #
 # Works on input data read in using readdlm #

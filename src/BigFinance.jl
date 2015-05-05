@@ -13,7 +13,7 @@ if VERSION < v"0.4.0-"
 end
 
 #File I/O and decoding
-export parse_tpv, showtrade
+export readnxtrade, parse_tpv, showtrade
 include("readnanex.jl")
 
 #Analytics
