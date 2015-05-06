@@ -1,0 +1,9 @@
+julia 0.3
+Color
+Compat
+DataFrames
+Dates
+Docile
+Distributions
+Gadfly
+LsqFit
