@@ -8,7 +8,7 @@ k: maximal number of anomalies to find.
 α: Significance level. Default: 0.05
 Returns index set of outliers and their associated Grubbs's statistic values
 """ ->
-function gesd(xin, k = min(1000, sqrt(length(xin))), α = 0.05)
+function gesd(xin, k::Int = min(1000, isqrt(length(xin))), α::Real = 0.05)
     x = copy(xin)
     oldidx = collect(1:length(x))
     is = Int[]
