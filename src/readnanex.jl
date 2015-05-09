@@ -142,20 +142,41 @@ Missing entries are not included
 If the second argument is true, uniqfy data by time stamp. The price is
 overwritten by the weighted average and the tick volume is summed.
 """ ->
-parse_tpv(data, uniquetime::Bool=true) = parse_tpv(parse_times(data), sub(data, :, 29), int(sub(data, :, 28)), sub(data, :, 22), uniquetime)
-parse_tpv(data::DataFrame, uniquetime::Bool=true) = parse_tpv(data[:,:systime], data[:,:price], data[:,:ttickvol], data[:,:tvoltype], uniquetime)
+#parse_tpv(data; uniquetime::Bool=true, filtertrades::Bool=true) = parse_tpv(parse_times(data), sub(data, :, 29), int(sub(data, :, 28)), sub(data, :, 22), uniquetime=uniquetime, filtertrades=filtertrades)
+#parse_tpv(data::DataFrame; uniquetime::Bool=true, filtertrades::Bool=true) = parse_tpv(data[:systime], data[:price], data[:ttickvol], data[:tvoltype], data[:tcidx], uniquetime=uniquetime, filtertrades=filtertrades)
 
-function parse_tpv(times, prices, vols, voltypes, uniquetime=true)
-    sp = sortperm(times)
+#function parse_tpv(times, prices, vols, voltypes, tcidx;
+function parse_tpv(data::DataFrame;
+        uniquetime=true, filtertrades=true, dosort=false)
 
-    #Now handle the possibility that there are different volume types
-    voltypes = voltypes[sp]
-    vols = vols[sp]
+    times =    copy(data[:systime].data)
+    prices=    copy(data[:price].data)
+    vols  =    copy(data[:ttickvol].data)
+    voltypes = copy(data[:tvoltype].data)
+    tcidx =    copy(data[:tcidx].data)
 
+    if dosort
+        sp = sortperm(times)
+
+        voltypes = voltypes[sp]
+        vols = vols[sp]
+        tcidx = tcidx[sp]
+        times = times[sp]
+        prices = prices[sp]
+    end
+
+    #Diff volumes to get volume size of individual transactions
+    #Must handle the possibility that there are different volume types
     n = length(times)
-    incrementalvols = similar(vols)
+    incrementalvols = zeros(Int, n)
     lastvol = 0
+    deleteme=Int[]
     for i=1:n
+        if filtertrades && !(tcidx[i]==0 || tcidx[i]==95 || tcidx[i]==115)
+            push!(deleteme, i)
+            continue
+        end
+
         thisvol = vols[i]
         if voltypes[i] == 0 #Incremental volume, need to diff
             incrementalvols[i] = thisvol - lastvol
@@ -170,16 +191,25 @@ function parse_tpv(times, prices, vols, voltypes, uniquetime=true)
         end
     end
 
-    times = times[sp]
-    prices = prices[sp]
+    for idx in sort!(deleteme, rev=true)
+        deleteat!(times, idx)
+        deleteat!(prices, idx)
+        deleteat!(incrementalvols, idx)
+    end
+    n = length(times)
 
     if uniquetime
-        #Now account for the possibility of repeated times
+        #Account for the possibility of repeated times
         deleteme = Int[]
         for i=n:-1:2
             if times[i] == times[i-1]
                 v2, v1 = incrementalvols[i], incrementalvols[i-1]
-                prices[i-1] = (v1*prices[i-1] + v2*prices[i])/(v1+v2)
+                v=v1+v2
+                if v>0
+                   prices[i-1] = (v1*prices[i-1] + v2*prices[i])/v
+                else
+                   prices[i-1] = (prices[i-1] + prices[i])/2
+                end
                 incrementalvols[i-1] += v2
                 push!(deleteme, i)
             end
@@ -191,7 +221,7 @@ function parse_tpv(times, prices, vols, voltypes, uniquetime=true)
             deleteat!(incrementalvols, idx)
         end
 
-        all(incrementalvols .≥ 0) || warn("negative volumes present")
+        #all(incrementalvols .≥ 0) || warn("negative volumes present")
     end
 
     DataFrame(time=times, price=prices, vol=incrementalvols)
