@@ -59,8 +59,8 @@ const fieldnames = [
 @doc """
 Read NxCore trade data from TSV file
 """ ->
-function readnxtrade(filename::String)
-    gc_disable()
+function readnxtrade(filename::String; nogc=true)
+    nogc && gc_disable()
     #Read in raw TSV
     df=readtable(filename, separator='\t', header = false,
         eltypes=[
@@ -86,6 +86,7 @@ function readnxtrade(filename::String)
             :qmdrgn, :qmdbbo, :qmfbbo, :qmfrbn, :qmtbbo, #45
             :qmtrgn #46
         ])
+    nogc && gc_enable()
 
     #Add systime column for properly parsed time
     df[:systime]=BigFinance.parse_times(df, :systimed, :systimet)
@@ -103,7 +104,6 @@ function readnxtrade(filename::String)
     ]
         try delete!(df, field) end
     end
-    gc_enable()
 
     #Return DataFrame sorted by exchange sequence ID
     sort!(df, cols=:texgseq)
