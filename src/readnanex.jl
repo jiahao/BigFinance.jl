@@ -172,7 +172,10 @@ function parse_tpv(data::DataFrame;
     lastvol = 0
     deleteme=Int[]
     for i=1:n
-        if filtertrades && !(tcidx[i]==0 || tcidx[i]==95 || tcidx[i]==115)
+        if filtertrades && !(tcidx[i]==0 || tcidx[i]==95 || tcidx[i]==115
+		||tcidx[i]==5 || tcidx[i]==6 || tcidx[i]==7 || tcidx[i]==51
+		)
+
             push!(deleteme, i)
             continue
         end
